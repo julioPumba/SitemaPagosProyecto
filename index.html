@@ -287,7 +287,7 @@
         </ol>
         <div class="rate">
           <strong id="rateView">—</strong>
-          <span>Tasa BCV de demostración (Bs. por USD). En el sistema real se toma la tasa oficial del día y se guarda con cada pago.</span>
+          <span>Tasa BCV del día (Bs. por USD). Se guarda con cada pago para verificar la cuota.</span>
         </div>
       </div>
 
@@ -348,18 +348,18 @@
 
 <script>
   // Datos de demostración (en memoria)
-  const TASA_BCV = 36.50; // valor de demostración, reemplazar por la tasa oficial del día
+  const TASA_BCV = 893.217; // tasa BCV del día
   const BANCOS = ["Banco de Venezuela", "Banesco", "Mercantil", "Bancaribe", "BNC", "Provincial", "Bancamiga", "Banco del Tesoro"];
   const pagos = [
-    { ci: "28596966", fecha: "2026-10-02", banco: "Banesco", monto: 1825.00, ref: "004512", estatus: "Verificado", tasa: 36.50 },
-    { ci: "28596966", fecha: "2026-10-30", banco: "Mercantil", monto: 1825.00, ref: "778201", estatus: "Pendiente", tasa: 36.50 },
-    { ci: "26386603", fecha: "2026-10-15", banco: "Banco de Venezuela", monto: 900.00, ref: "331009", estatus: "Rechazado", tasa: 36.50 }
+    { ci: "28596966", fecha: "2026-10-02", banco: "Banesco", monto: 1825.00, ref: "004512", estatus: "Verificado", tasa: 893.217 },
+    { ci: "28596966", fecha: "2026-10-30", banco: "Mercantil", monto: 1825.00, ref: "778201", estatus: "Pendiente", tasa: 893.217 },
+    { ci: "26386603", fecha: "2026-10-15", banco: "Banco de Venezuela", monto: 900.00, ref: "331009", estatus: "Rechazado", tasa: 893.217 }
   ];
 
   const fmtBs = n => n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const $ = id => document.getElementById(id);
 
-  $("rateView").textContent = "Bs. " + fmtBs(TASA_BCV);
+  $("rateView").textContent = "Bs. " + TASA_BCV.toLocaleString("es-VE", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   for (const id of ["emisor", "receptor"]) {
     $(id).innerHTML = "<option value=''>Selecciona un banco</option>" + BANCOS.map(b => `<option>${b}</option>`).join("");
   }
