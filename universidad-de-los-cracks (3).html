@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Universidad de los Cracks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #27275e;
+    --navy-deep: #1d1d4a;
+    --navy-veil: #3a3a72;
+    --lavender: #6b6ba0;
+    --yellow: #f7d93a;
+    --white: #ffffff;
+    --paper: #f3efe7;
+    --ink: #1f1f3d;
+    --muted: #5a5a78;
+    --line: #d9d3c6;
+    --surface: #ffffff;
+    --ok: #1f7a4d;
+    --warn: #9a6a00;
+    --bad: #b3261e;
+    color-scheme: light;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #17173a;
+      --ink: #ecebf6;
+      --muted: #b0afcc;
+      --line: #36366a;
+      --surface: #212150;
+      --ok: #6fd3a0;
+      --warn: #f2c94c;
+      --bad: #ff8a80;
+      color-scheme: dark;
+    }
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 80px); }
+  body {
+    margin: 0;
+    font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.6;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--navy);
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+  /* Header */
+  header {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+    background: var(--navy); border-bottom: 1px solid rgba(255,255,255,.12);
+  }
+  .bar {
+    max-width: 1120px; margin: 0 auto; padding: 18px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--white); }
+  .brand svg { width: 46px; height: 46px; flex: none; }
+  .brand b { font-family: Raleway, sans-serif; font-weight: 800; font-size: 1.05rem; line-height: 1.1; display: block; }
+  .brand small { font-size: .78rem; opacity: .75; }
+  nav ul { list-style: none; display: flex; gap: 28px; margin: 0; padding: 0; }
+  nav a { color: #e6e6f5; text-decoration: none; text-transform: uppercase; font-size: .88rem; letter-spacing: .02em; }
+  nav a:hover { color: var(--yellow); }
+  .menu-btn { display: none; background: none; border: 1px solid rgba(255,255,255,.4); color: #fff; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+
+  /* Hero */
+  .hero { position: relative; overflow: hidden; background: var(--navy-deep); color: var(--white); min-height: 640px; display: flex; align-items: center; }
+  .hero-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero-inner { position: relative; max-width: 1120px; width: 100%; margin: 0 auto; padding: 96px 24px 160px; }
+  .hero h1 {
+    font-family: Raleway, sans-serif; font-weight: 800; color: var(--yellow);
+    font-size: clamp(2.4rem, 7vw, 5.2rem); line-height: 1; margin: 0;
+    letter-spacing: -.02em; text-shadow: 0 4px 18px rgba(0,0,0,.35);
+  }
+  .hero hr { border: 0; border-top: 2px solid var(--white); width: min(100%, 720px); margin: 26px 0 22px; }
+  .hero p.lead { font-family: Raleway, sans-serif; font-weight: 500; font-size: clamp(1.4rem, 3.4vw, 2.6rem); line-height: 1.12; margin: 0; max-width: 26ch; }
+  .hero p.tag { font-family: Raleway, sans-serif; text-transform: uppercase; font-size: 1.05rem; margin: 52px 0 28px; opacity: .95; }
+  .actions { display: flex; flex-wrap: wrap; gap: 14px; }
+  .btn { display: inline-block; font: 600 1rem "Open Sans", sans-serif; padding: 13px 24px; border-radius: 4px; border: 2px solid var(--yellow); cursor: pointer; text-decoration: none; }
+  .btn.solid { background: var(--yellow); color: var(--navy-deep); }
+  .btn.ghost { background: transparent; color: var(--white); border-color: rgba(255,255,255,.7); }
+  .btn:hover { filter: brightness(1.08); }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-inner > * { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+    .hero-inner > *:nth-child(2) { animation-delay: .12s; }
+    .hero-inner > *:nth-child(3) { animation-delay: .2s; }
+    .hero-inner > *:nth-child(4), .hero-inner > *:nth-child(5) { animation-delay: .3s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  }
+
+  /* Sections */
+  section.block { max-width: 1120px; margin: 0 auto; padding: 88px 24px; }
+  h2 { font-family: Raleway, sans-serif; font-weight: 800; font-size: clamp(1.8rem, 3.6vw, 2.6rem); line-height: 1.1; margin: 0 0 14px; color: var(--ink); }
+  h3 { font-family: Raleway, sans-serif; font-weight: 700; font-size: 1.2rem; margin: 0 0 6px; }
+  .intro { color: var(--muted); max-width: 62ch; margin: 0 0 40px; }
+
+  /* Payments */
+  .pay { display: grid; grid-template-columns: 1fr 1.25fr; gap: 56px; align-items: start; }
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  .steps li { counter-increment: s; position: relative; padding: 0 0 26px 58px; }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 0;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--navy); color: var(--yellow);
+    font: 800 1.1rem Raleway, sans-serif; display: grid; place-items: center;
+  }
+  .steps li:not(:last-child)::after { content: ""; position: absolute; left: 19px; top: 44px; bottom: 6px; width: 2px; background: var(--line); }
+  .steps p { margin: 0; color: var(--muted); }
+  .rate { margin-top: 10px; padding: 16px 18px; border-left: 4px solid var(--yellow); background: var(--surface); }
+  .rate strong { font-family: Raleway, sans-serif; font-size: 1.4rem; }
+  .rate span { display: block; font-size: .85rem; color: var(--muted); }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-top: 6px solid var(--navy); }
+  [data-theme] .panel, .panel { border-radius: 2px; }
+  .tabs { display: flex; border-bottom: 1px solid var(--line); }
+  .tabs button {
+    flex: 1; background: none; border: 0; padding: 16px; font: 600 .98rem "Open Sans", sans-serif;
+    color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px;
+  }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--yellow); }
+  .tabpane { padding: 26px; }
+  .tabpane[hidden] { display: none; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: .88rem; font-weight: 600; }
+  input, select {
+    font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--paper); color: var(--ink); width: 100%;
+  }
+  input[type=file] { padding: 8px; }
+  .hint { font-size: .8rem; color: var(--muted); }
+  .msg { margin-top: 14px; padding: 12px 14px; font-size: .92rem; border-radius: 4px; display: none; }
+  .msg.show { display: block; }
+  .msg.ok { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); }
+  .msg.bad { background: color-mix(in srgb, var(--bad) 12%, transparent); color: var(--bad); }
+  .panel .btn.solid { width: 100%; }
+
+  .table-wrap { overflow-x: auto; margin-top: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font-weight: 600; color: var(--muted); }
+  .pill { font-weight: 600; font-size: .8rem; padding: 3px 10px; border-radius: 999px; }
+  .pill.Pendiente { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+  .pill.Verificado { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+  .pill.Rechazado { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+  .empty { color: var(--muted); margin-top: 16px; }
+
+
+  /* Administrador */
+  .right { display: flex; align-items: center; gap: 22px; }
+  .admin-btn {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    color: var(--yellow); border: 1.5px solid var(--yellow); border-radius: 4px;
+    padding: 7px 14px; font: 600 .85rem "Open Sans", sans-serif; text-transform: uppercase; letter-spacing: .02em;
+    background: transparent; cursor: pointer;
+  }
+  .admin-btn:hover { background: var(--yellow); color: var(--navy-deep); }
+  .admin-btn svg { width: 16px; height: 16px; }
+  .who { color: #c9c8e6; font-size: .85rem; text-align: right; line-height: 1.3; }
+  .who b { color: var(--white); display: block; }
+  [hidden] { display: none !important; }
+
+  .login-wrap { background: var(--navy-deep); min-height: calc(100vh - 82px); display: grid; place-items: center; padding: 48px 20px; }
+  .login {
+    width: min(100%, 420px); background: var(--surface); border-top: 6px solid var(--yellow);
+    padding: 34px 30px 30px; color: var(--ink);
+  }
+  .login h2 { margin-bottom: 4px; font-size: 1.7rem; }
+  .back { display: block; text-align: center; margin-top: 16px; font-size: .88rem; color: var(--muted); }
+  .login p.sub { color: var(--muted); margin: 0 0 24px; font-size: .95rem; }
+  .login .btn.solid { width: 100%; }
+  .demo { margin-top: 18px; font-size: .82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+  .demo code { background: var(--paper); padding: 1px 6px; border-radius: 3px; }
+
+  .admin-top { background: var(--navy); color: var(--white); }
+  .admin-top .in { max-width: 1120px; margin: 0 auto; padding: 34px 24px 0; }
+  .admin-top h2 { color: var(--yellow); margin-bottom: 4px; }
+  .admin-top p { margin: 0 0 22px; color: #c9c8e6; font-size: .92rem; }
+  .atabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .atabs button {
+    background: transparent; border: 0; color: #c9c8e6; padding: 12px 18px; cursor: pointer;
+    font: 600 .95rem "Open Sans", sans-serif; border-bottom: 3px solid transparent;
+  }
+  .atabs button[aria-selected="true"] { color: var(--white); border-bottom-color: var(--yellow); }
+  .admin-body { max-width: 1120px; margin: 0 auto; padding: 36px 24px 72px; }
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 34px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--navy); padding: 18px; }
+  .card.y { border-left-color: var(--yellow); }
+  .card span { display: block; font-size: .82rem; color: var(--muted); }
+  .card strong { display: block; font: 800 1.45rem Raleway, sans-serif; margin: 4px 0 2px; }
+  .card small { color: var(--muted); font-size: .8rem; }
+  .box { background: var(--surface); border: 1px solid var(--line); padding: 22px; margin-bottom: 26px; }
+  .box h3 { margin-bottom: 14px; }
+  .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+  .toolbar .field { margin: 0; min-width: 180px; flex: 1; }
+  .act { display: flex; gap: 6px; }
+  .mini { font: 600 .8rem "Open Sans", sans-serif; padding: 5px 10px; border-radius: 4px; cursor: pointer; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+  .mini.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+  .mini.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+  .reject { margin-top: 16px; padding: 16px; border: 1px dashed var(--bad); display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+  .reject .field { flex: 1; min-width: 220px; margin: 0; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tasa-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 26px; align-items: start; }
+  .muted { color: var(--muted); }
+
+  @media (max-width: 900px) {
+    .pay { grid-template-columns: 1fr; gap: 40px; }
+    .cards { grid-template-columns: 1fr 1fr; }
+    .tasa-grid { grid-template-columns: 1fr; }
+    .menu-btn { display: block; }
+    nav { position: absolute; left: 0; right: 0; top: 100%; background: var(--navy); display: none; }
+    nav.open { display: block; }
+    nav ul { flex-direction: column; gap: 0; padding: 8px 24px 18px; }
+    nav a { display: block; padding: 10px 0; }
+  }
+  @media (max-width: 560px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .hero { min-height: 560px; }
+    .hero-inner { padding: 64px 20px 140px; }
+    .brand small { display: none; }
+    .admin-btn span, .who { display: none; }
+    .right { gap: 10px; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a class="brand" href="#inicio" aria-label="Universidad de los Cracks, inicio">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M24 4 44 12v12c0 11-8.6 18.6-20 21C12.6 42.6 4 35 4 24V12Z" fill="#f7d93a"/>
+        <path d="M24 11 13 16l11 5 11-5Z" fill="#27275e"/>
+        <path d="M17 19v6c0 2 3.2 4 7 4s7-2 7-4v-6l-7 3.2Z" fill="#27275e"/>
+        <path d="M16 34h16" stroke="#27275e" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <span><b>Universidad de los Cracks</b><small>Educación superior · Venezuela</small></span>
+    </a>
+    <div class="right">
+      <button class="menu-btn" aria-expanded="false" aria-controls="nav">Menú</button>
+      <nav id="nav">
+        <ul>
+          <li><a href="#inicio">Inicio</a></li>
+          <li><a href="#pagos">Pagos</a></li>
+        </ul>
+      </nav>
+      <a class="admin-btn" id="adminBtn" href="#admin" aria-label="Acceso administrador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Administrador</span></a>
+      <div class="who" id="who" hidden><b id="whoName"></b><span id="whoExp"></span></div>
+      <button class="admin-btn" id="logoutBtn" type="button" aria-label="Cerrar sesión" hidden><span>Cerrar sesión</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="vistaPublica">
+  <section class="hero" id="inicio">
+    <svg class="hero-art" viewBox="0 0 1440 720" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <radialGradient id="glow" cx="55%" cy="40%" r="60%">
+          <stop offset="0" stop-color="#3b3b7e"/>
+          <stop offset="1" stop-color="#1d1d4a"/>
+        </radialGradient>
+        <linearGradient id="pageL" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#4a4a86"/>
+          <stop offset="1" stop-color="#6d6da5"/>
+        </linearGradient>
+        <linearGradient id="pageR" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f3ead8"/>
+          <stop offset="1" stop-color="#b9b2a4"/>
+        </linearGradient>
+      </defs>
+      <rect width="1440" height="720" fill="url(#glow)"/>
+      <!-- graduation cap -->
+      <g opacity=".42" fill="#7a7ab2">
+        <path d="M760 225 1000 330 760 430 520 330Z"/>
+        <path d="M630 375v95c0 40 60 70 130 70s130-30 130-70v-95l-130 55Z"/>
+        <path d="M600 345v170l-28 70h56l-14-70V352Z"/>
+      </g>
+      <g fill="#ffffff" opacity=".5">
+        <circle cx="742" cy="470" r="1.6"/><circle cx="790" cy="505" r="1.2"/><circle cx="715" cy="540" r="1.4"/>
+        <circle cx="830" cy="560" r="1"/><circle cx="760" cy="590" r="1.6"/><circle cx="700" cy="610" r="1"/>
+        <circle cx="805" cy="625" r="1.3"/><circle cx="868" cy="520" r="1.1"/><circle cx="660" cy="575" r="1.2"/>
+      </g>
+      <!-- open book, left page tinted navy, right page warm paper -->
+      <path d="M-20 470C260 430 560 470 760 640V740H-20Z" fill="url(#pageL)" opacity=".85"/>
+      <g stroke="#8a8abd" stroke-width="2" fill="none" opacity=".55">
+        <path d="M-20 500C260 462 540 500 740 655"/>
+        <path d="M-20 540C250 505 520 540 720 680"/>
+        <path d="M-20 585C240 552 500 585 700 708"/>
+      </g>
+      <path d="M760 640C900 520 1080 470 1460 500V740H760Z" fill="url(#pageR)"/>
+      <path d="M760 640C900 520 1080 470 1460 500V740H760Z" fill="#27275e" opacity=".18"/>
+      <g stroke="#8d877b" stroke-width="2" fill="none" opacity=".6">
+        <path d="M790 660C920 560 1090 520 1460 545"/>
+        <path d="M820 690C950 600 1110 565 1460 590"/>
+        <path d="M850 720C980 640 1130 610 1460 635"/>
+      </g>
+      <rect width="1440" height="720" fill="#27275e" opacity=".22"/>
+    </svg>
+    <div class="hero-inner">
+      <h1>CRACKS DEL FUTURO</h1>
+      <hr>
+      <p class="lead">Sistema de conciliación de pagos</p>
+      <p class="tag">Formando profesionales exitosos</p>
+      <div class="actions">
+        <a class="btn solid" href="#pagos" data-tab="reportar">Reportar un pago</a>
+        <a class="btn ghost" href="#pagos" data-tab="consultar">Consultar mi pago</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="pagos">
+    <h2>Portal de pagos</h2>
+    <p class="intro">Reporta tus transferencias y pagos móviles sin enviar correos. Cobranzas valida cada pago contra el estado de cuenta del banco y tú ves el resultado aquí mismo.</p>
+
+    <div class="pay">
+      <div>
+        <ol class="steps">
+          <li><h3>Reporta tu pago</h3><p>Indica bancos, fecha, monto, número de referencia y adjunta el comprobante.</p></li>
+          <li><h3>Lo validamos</h3><p>El sistema cruza la referencia y el monto con el estado de cuenta bancario.</p></li>
+          <li><h3>Consulta el resultado</h3><p>Tu pago pasa a Verificado o Rechazado, y tu inscripción se formaliza.</p></li>
+        </ol>
+        <div class="rate">
+          <strong id="rateView">—</strong>
+          <span>Tasa BCV del día (Bs. por USD). Se guarda con cada pago para verificar la cuota.</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="tabs" role="tablist">
+          <button role="tab" id="t-reportar" aria-controls="p-reportar" aria-selected="true">Reportar pago</button>
+          <button role="tab" id="t-consultar" aria-controls="p-consultar" aria-selected="false" tabindex="-1">Consultar estatus</button>
+        </div>
+
+        <form class="tabpane" id="p-reportar" role="tabpanel" aria-labelledby="t-reportar" novalidate>
+          <div class="grid2">
+            <div class="field full">
+              <label for="ci">Cédula de identidad</label>
+              <input id="ci" inputmode="numeric" placeholder="Ej. 28596966" required>
+            </div>
+            <div class="field">
+              <label for="emisor">Banco emisor</label>
+              <select id="emisor" required></select>
+            </div>
+            <div class="field">
+              <label for="receptor">Banco receptor</label>
+              <select id="receptor" required></select>
+            </div>
+            <div class="field">
+              <label for="fecha">Fecha del pago</label>
+              <input id="fecha" type="date" required>
+            </div>
+            <div class="field">
+              <label for="monto">Monto (Bs.)</label>
+              <input id="monto" type="number" min="0" step="0.01" placeholder="0,00" required>
+              <span class="hint" id="equiv">&nbsp;</span>
+            </div>
+            <div class="field full">
+              <label for="ref">Número de referencia</label>
+              <input id="ref" inputmode="numeric" placeholder="Últimos dígitos de la operación" required>
+            </div>
+            <div class="field full">
+              <label for="comp">Comprobante (imagen o PDF)</label>
+              <input id="comp" type="file" accept="image/*,application/pdf" required>
+            </div>
+          </div>
+          <button class="btn solid" type="submit">Enviar reporte</button>
+          <div class="msg" id="msgReport" role="status"></div>
+        </form>
+
+        <form class="tabpane" id="p-consultar" role="tabpanel" aria-labelledby="t-consultar" hidden novalidate>
+          <div class="field">
+            <label for="ciQ">Cédula de identidad</label>
+            <input id="ciQ" inputmode="numeric" placeholder="Prueba con 28596966">
+          </div>
+          <button class="btn solid" type="submit">Consultar pagos</button>
+          <div id="results"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="login-wrap" id="vistaLogin" hidden>
+  <form class="login" id="loginForm" novalidate>
+    <h2>Acceso administrativo</h2>
+    <p class="sub">Ingresa con tu usuario del departamento de cobranzas.</p>
+    <div class="field">
+      <label for="usr">Usuario</label>
+      <input id="usr" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="pwd">Contraseña</label>
+      <input id="pwd" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn solid" type="submit">Ingresar</button>
+    <div class="msg" id="msgLogin" role="alert"></div>
+    <a class="back" href="#inicio">← Volver al portal de pagos</a>
+    <div class="demo">Usuarios de demostración: <code>admin</code> / <code>cracks2026</code> (superadmin) y <code>cobranzas</code> / <code>cobros2026</code>.</div>
+  </form>
+</section>
+
+<section id="vistaAdmin" hidden>
+  <div class="admin-top">
+    <div class="in">
+      <h2>Módulo administrativo</h2>
+      <p id="sesionInfo"></p>
+      <div class="atabs" role="tablist">
+        <button role="tab" data-at="resumen" aria-selected="true">Resumen</button>
+        <button role="tab" data-at="pagos" aria-selected="false">Pagos</button>
+        <button role="tab" data-at="tasas" aria-selected="false">Tasas BCV</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <div data-pane="resumen">
+      <div class="cards" id="cards"></div>
+      <div class="box">
+        <h3>Últimos pagos reportados</h3>
+        <div class="table-wrap" id="ultimos"></div>
+      </div>
+    </div>
+
+    <div data-pane="pagos" hidden>
+      <div class="box">
+        <div class="toolbar">
+          <div class="field">
+            <label for="fEstatus">Estatus</label>
+            <select id="fEstatus"><option value="">Todos</option><option>Pendiente</option><option>Verificado</option><option>Rechazado</option></select>
+          </div>
+          <div class="field">
+            <label for="fBuscar">Buscar cédula o referencia</label>
+            <input id="fBuscar" placeholder="Ej. 28596966 o 778201">
+          </div>
+        </div>
+        <div class="table-wrap" id="tablaPagos"></div>
+        <div class="reject" id="rechazoBox" hidden>
+          <div class="field">
+            <label for="motivo" id="motivoLbl">Motivo del rechazo</label>
+            <input id="motivo" placeholder="Ej. Monto no coincide con el estado de cuenta">
+          </div>
+          <button class="mini bad" id="confRechazo" type="button">Confirmar rechazo</button>
+          <button class="mini" id="cancRechazo" type="button">Cancelar</button>
+        </div>
+        <div class="msg" id="msgPagos" role="status"></div>
+      </div>
+      <div class="box">
+        <h3>Historial de validaciones</h3>
+        <div class="table-wrap" id="tablaVal"></div>
+      </div>
+    </div>
+
+    <div data-pane="tasas" hidden>
+      <div class="tasa-grid">
+        <form class="box" id="tasaForm" novalidate>
+          <h3>Cargar tasa del día</h3>
+          <div class="field">
+            <label for="tFecha">Fecha</label>
+            <input id="tFecha" type="date">
+          </div>
+          <div class="field">
+            <label for="tValor">Tasa BCV (Bs. por USD)</label>
+            <input id="tValor" type="number" min="0" step="0.001" placeholder="893.217">
+          </div>
+          <button class="btn solid" type="submit" style="width:100%">Registrar tasa</button>
+          <div class="msg" id="msgTasa" role="status"></div>
+        </form>
+        <div class="box">
+          <h3>Historial de tasas</h3>
+          <div class="table-wrap" id="tablaTasas"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<script>
+  // ===== "Base de datos" en memoria, con la misma estructura del modelo relacional =====
+  const db = {
+    administradores: [
+      { id: 1, usuario: "admin", nombre: "Julio Navas", rol: "superadmin", activo: true,
+        password_hash: "f4e68314f1136c14b84e49e2fd05046aff1ec229b70126a6203b3e2a1fa4b39c", ultimo_acceso: null },
+      { id: 2, usuario: "cobranzas", nombre: "Emily Toro", rol: "cobranzas", activo: true,
+        password_hash: "f6f1295e1c43ebcf50f89102349507797d5a9391aebe0da09945bfb3c6402721", ultimo_acceso: null }
+    ],
+    sesiones_admin: [],
+    bancos: [
+      { id: 1, codigo: "0102", nombre: "Banco de Venezuela" }, { id: 2, codigo: "0134", nombre: "Banesco" },
+      { id: 3, codigo: "0105", nombre: "Mercantil" }, { id: 4, codigo: "0114", nombre: "Bancaribe" },
+      { id: 5, codigo: "0191", nombre: "BNC" }, { id: 6, codigo: "0108", nombre: "Provincial" },
+      { id: 7, codigo: "0172", nombre: "Bancamiga" }, { id: 8, codigo: "0163", nombre: "Banco del Tesoro" }
+    ],
+    estudiantes: [
+      { id: 1, cedula: "28596966", nombres: "Edward", apellidos: "Camacho" },
+      { id: 2, cedula: "26386603", nombres: "Emily", apellidos: "Toro" },
+      { id: 3, cedula: "23613041", nombres: "Julio", apellidos: "Navas" },
+      { id: 4, cedula: "31510668", nombres: "Valery", apellidos: "Hurtado" }
+    ],
+    tasas_bcv: [
+      { id: 1, fecha: "2026-10-02", valor: 845.100, registrada_por: 1 },
+      { id: 2, fecha: "2026-10-15", valor: 862.400, registrada_por: 1 },
+      { id: 3, fecha: "2026-10-30", valor: 885.950, registrada_por: 2 },
+      { id: 4, fecha: "2026-11-04", valor: 893.217, registrada_por: 1 }
+    ],
+    pagos: [
+      { id: 1, estudiante_id: 1, banco_emisor_id: 2, banco_receptor_id: 1, tasa_id: 1, fecha_pago: "2026-10-02", monto_bs: 16902.00, referencia: "004512", estatus: "Verificado", creado_en: "2026-10-02T10:14" },
+      { id: 2, estudiante_id: 1, banco_emisor_id: 3, banco_receptor_id: 1, tasa_id: 3, fecha_pago: "2026-10-30", monto_bs: 17719.00, referencia: "778201", estatus: "Pendiente", creado_en: "2026-10-30T16:40" },
+      { id: 3, estudiante_id: 2, banco_emisor_id: 1, banco_receptor_id: 1, tasa_id: 2, fecha_pago: "2026-10-15", monto_bs: 8624.00, referencia: "331009", estatus: "Rechazado", creado_en: "2026-10-15T09:02" },
+      { id: 4, estudiante_id: 3, banco_emisor_id: 5, banco_receptor_id: 1, tasa_id: 4, fecha_pago: "2026-11-04", monto_bs: 17864.34, referencia: "120988", estatus: "Pendiente", creado_en: "2026-11-04T08:31" }
+    ],
+    validaciones: [
+      { id: 1, pago_id: 1, admin_id: 2, estatus_nuevo: "Verificado", motivo: "Coincide con estado de cuenta Banesco", fecha: "2026-10-03T11:20" },
+      { id: 2, pago_id: 3, admin_id: 2, estatus_nuevo: "Rechazado", motivo: "Monto no coincide con el estado de cuenta", fecha: "2026-10-16T14:05" }
+    ]
+  };
+  const nextId = t => db[t].reduce((m, r) => Math.max(m, r.id), 0) + 1;
+  const byId = (t, id) => db[t].find(r => r.id === id);
+
+  // ===== Utilidades =====
+  const $ = id => document.getElementById(id);
+  const fmtBs = n => n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtTasa = n => n.toLocaleString("es-VE", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  const fmtFecha = f => f.slice(0, 10).split("-").reverse().join("/");
+  const hoy = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+  const ahora = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  function show(el, text, kind) { el.textContent = text; el.className = "msg show " + kind; }
+  function hide(el) { el.className = "msg"; el.textContent = ""; }
+
+  // Tasa aplicable a una fecha: la última registrada en o antes de ese día
+  function tasaPara(fecha) {
+    return db.tasas_bcv.filter(t => t.fecha <= fecha).sort((a, b) => b.fecha.localeCompare(a.fecha))[0] || null;
+  }
+  const tasaVigente = () => tasaPara(hoy()) || [...db.tasas_bcv].sort((a, b) => b.fecha.localeCompare(a.fecha))[0];
+  const montoUsd = p => p.monto_bs / byId("tasas_bcv", p.tasa_id).valor;
+
+  // ===== Portal del estudiante =====
+  function pintarTasaPublica() { $("rateView").textContent = "Bs. " + fmtTasa(tasaVigente().valor); }
+  pintarTasaPublica();
+  for (const id of ["emisor", "receptor"]) {
+    $(id).innerHTML = "<option value=''>Selecciona un banco</option>" + db.bancos.map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
+  }
+  $("fecha").max = hoy();
+
+  function actualizarEquiv() {
+    const v = parseFloat($("monto").value);
+    const t = tasaPara($("fecha").value || hoy());
+    $("equiv").textContent = v > 0 && t ? `Equivale a USD ${fmtBs(v / t.valor)} (tasa ${fmtTasa(t.valor)} del ${fmtFecha(t.fecha)})` : "\u00a0";
+  }
+  $("monto").addEventListener("input", actualizarEquiv);
+  $("fecha").addEventListener("change", actualizarEquiv);
+
+  const tabs = [...document.querySelectorAll('.panel [role="tab"]')];
+  function selectTab(name) {
+    tabs.forEach(t => {
+      const on = t.id === "t-" + name;
+      t.setAttribute("aria-selected", on); t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+  tabs.forEach(t => t.addEventListener("click", () => selectTab(t.id.slice(2))));
+  tabs.forEach((t, i) => t.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      const n = tabs[(i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length]; n.focus(); n.click();
+    }
+  }));
+  document.querySelectorAll("[data-tab]").forEach(a => a.addEventListener("click", () => selectTab(a.dataset.tab)));
+
+  const menuBtn = document.querySelector(".menu-btn");
+  menuBtn.addEventListener("click", () => { const o = $("nav").classList.toggle("open"); menuBtn.setAttribute("aria-expanded", o); });
+  document.querySelectorAll("nav a").forEach(a => a.addEventListener("click", () => { $("nav").classList.remove("open"); menuBtn.setAttribute("aria-expanded", false); }));
+
+  $("p-reportar").addEventListener("submit", e => {
+    e.preventDefault();
+    const msg = $("msgReport");
+    const ci = $("ci").value.replace(/\D/g, ""), ref = $("ref").value.replace(/\D/g, "");
+    const monto = parseFloat($("monto").value), emisor = +$("emisor").value, receptor = +$("receptor").value, fecha = $("fecha").value;
+    const missing = [];
+    if (ci.length < 6) missing.push("cédula");
+    if (!emisor) missing.push("banco emisor");
+    if (!receptor) missing.push("banco receptor");
+    if (!fecha) missing.push("fecha");
+    if (!(monto > 0)) missing.push("monto");
+    if (ref.length < 4) missing.push("referencia (mínimo 4 dígitos)");
+    if (!$("comp").files.length) missing.push("comprobante");
+    if (missing.length) return show(msg, "Completa estos campos: " + missing.join(", ") + ".", "bad");
+    const tasa = tasaPara(fecha);
+    if (!tasa) return show(msg, "No hay tasa BCV registrada para esa fecha. Contacta a Cobranzas.", "bad");
+    // UNIQUE (banco_emisor_id, referencia)
+    if (db.pagos.some(p => p.referencia === ref && p.banco_emisor_id === emisor)) {
+      return show(msg, `La referencia ${ref} de ${byId("bancos", emisor).nombre} ya fue reportada. Si crees que es un error, contacta a Cobranzas.`, "bad");
+    }
+    let est = db.estudiantes.find(s => s.cedula === ci);
+    if (!est) { est = { id: nextId("estudiantes"), cedula: ci, nombres: "Estudiante", apellidos: "sin registrar" }; db.estudiantes.push(est); }
+    db.pagos.push({ id: nextId("pagos"), estudiante_id: est.id, banco_emisor_id: emisor, banco_receptor_id: receptor, tasa_id: tasa.id,
+      fecha_pago: fecha, monto_bs: monto, referencia: ref, estatus: "Pendiente", creado_en: ahora() });
+    e.target.reset(); $("equiv").textContent = "\u00a0";
+    show(msg, `Pago reportado. La referencia ${ref} quedó en estatus Pendiente hasta su conciliación.`, "ok");
+  });
+
+  $("p-consultar").addEventListener("submit", e => {
+    e.preventDefault();
+    const ci = $("ciQ").value.replace(/\D/g, ""), out = $("results");
+    if (!ci) { out.innerHTML = `<p class="empty">Escribe tu cédula para ver tus pagos.</p>`; return; }
+    const est = db.estudiantes.find(s => s.cedula === ci);
+    const mine = est ? db.pagos.filter(p => p.estudiante_id === est.id).sort((a, b) => b.fecha_pago.localeCompare(a.fecha_pago)) : [];
+    if (!mine.length) { out.innerHTML = `<p class="empty">No hay pagos reportados con la cédula ${ci}. Usa la pestaña Reportar pago para registrar uno.</p>`; return; }
+    out.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Fecha</th><th>Banco</th><th>Referencia</th><th class="num">Monto (Bs.)</th><th>Estatus</th></tr></thead>
+      <tbody>${mine.map(p => `<tr><td>${fmtFecha(p.fecha_pago)}</td><td>${byId("bancos", p.banco_emisor_id).nombre}</td><td>${p.referencia}</td><td class="num">${fmtBs(p.monto_bs)}</td><td><span class="pill ${p.estatus}">${p.estatus}</span></td></tr>`).join("")}</tbody>
+    </table></div>`;
+  });
+
+  // ===== Sesión de administrador =====
+  const SESION_MIN = 30;
+  let sesion = null;
+  async function sha256(t) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+  function sesionValida() {
+    if (sesion && new Date() < new Date(sesion.expira_en)) return true;
+    if (sesion) { sesion.cerrada_en = ahora(); sesion = null; }
+    return false;
+  }
+  function renovar() { if (sesion) sesion.expira_en = new Date(Date.now() + SESION_MIN * 60000).toISOString(); }
+
+  $("loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = $("msgLogin"), u = $("usr").value.trim().toLowerCase(), pw = $("pwd").value;
+    if (!u || !pw) return show(msg, "Escribe tu usuario y tu contraseña.", "bad");
+    const adm = db.administradores.find(a => a.usuario === u && a.activo);
+    const h = await sha256(pw);
+    if (!adm || adm.password_hash !== h) { $("pwd").value = ""; return show(msg, "Usuario o contraseña incorrectos.", "bad"); }
+    hide(msg); e.target.reset();
+    adm.ultimo_acceso = ahora();
+    sesion = { id: nextId("sesiones_admin"), admin_id: adm.id, token_hash: await sha256(crypto.randomUUID()),
+      user_agent: navigator.userAgent, creada_en: ahora(), expira_en: "", cerrada_en: null };
+    renovar(); db.sesiones_admin.push(sesion);
+    route();
+  });
+  $("logoutBtn").addEventListener("click", () => {
+    if (sesion) sesion.cerrada_en = ahora();
+    sesion = null; location.hash = "inicio"; route();
+  });
+
+  // ===== Rutas: #admin muestra login o módulo; cualquier otra, el portal público =====
+  function route() {
+    const enAdmin = location.hash === "#admin";
+    const logueado = sesionValida();
+    $("vistaPublica").hidden = enAdmin;
+    $("vistaLogin").hidden = !enAdmin || logueado;
+    $("vistaAdmin").hidden = !enAdmin || !logueado;
+    $("adminBtn").hidden = enAdmin && logueado;
+    $("nav").hidden = enAdmin;
+    menuBtn.hidden = enAdmin;
+    $("who").hidden = $("logoutBtn").hidden = !(enAdmin && logueado);
+    if (enAdmin && logueado) { pintarSesion(); pintarAdmin(); }
+    else if (enAdmin) { window.scrollTo(0, 0); setTimeout(() => $("usr").focus(), 0); }
+    if (!enAdmin) pintarTasaPublica();
+  }
+  window.addEventListener("hashchange", route);
+
+  function pintarSesion() {
+    const a = byId("administradores", sesion.admin_id);
+    const exp = new Date(sesion.expira_en).toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit" });
+    $("whoName").textContent = a.nombre;
+    $("whoExp").textContent = `${a.rol} · expira ${exp}`;
+    $("sesionInfo").textContent = `Sesión #${sesion.id} de ${a.nombre} (${a.rol}), iniciada ${sesion.creada_en.replace("T", " ")}. Se cierra tras ${SESION_MIN} minutos sin actividad.`;
+  }
+
+  // ===== Módulo administrativo =====
+  const atabs = [...document.querySelectorAll(".atabs button")];
+  atabs.forEach(b => b.addEventListener("click", () => {
+    if (!sesionValida()) return route();
+    renovar(); pintarSesion();
+    atabs.forEach(x => x.setAttribute("aria-selected", x === b));
+    document.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== b.dataset.at);
+    pintarAdmin();
+  }));
+
+  function filaPago(p, acciones) {
+    const e = byId("estudiantes", p.estudiante_id), t = byId("tasas_bcv", p.tasa_id);
+    const btns = acciones && p.estatus === "Pendiente"
+      ? `<div class="act"><button class="mini ok" data-ver="${p.id}">Verificar</button><button class="mini bad" data-rech="${p.id}">Rechazar</button></div>`
+      : (acciones ? `<span class="muted">—</span>` : "");
+    return `<tr><td>${fmtFecha(p.fecha_pago)}</td><td>${esc(e.nombres + " " + e.apellidos)}<br><span class="muted">${e.cedula}</span></td>
+      <td>${byId("bancos", p.banco_emisor_id).nombre}<br><span class="muted">→ ${byId("bancos", p.banco_receptor_id).nombre}</span></td>
+      <td>${p.referencia}</td><td class="num">${fmtBs(p.monto_bs)}</td><td class="num">${fmtTasa(t.valor)}</td>
+      <td class="num">${fmtBs(montoUsd(p))}</td><td><span class="pill ${p.estatus}">${p.estatus}</span></td>${acciones ? `<td>${btns}</td>` : ""}</tr>`;
+  }
+  const cabPagos = acc => `<thead><tr><th>Fecha</th><th>Estudiante</th><th>Banco</th><th>Referencia</th><th class="num">Monto (Bs.)</th><th class="num">Tasa</th><th class="num">USD</th><th>Estatus</th>${acc ? "<th>Acción</th>" : ""}</tr></thead>`;
+
+  function pintarAdmin() {
+    const suma = arr => arr.reduce((s, p) => s + p.monto_bs, 0);
+    const n = (k, s) => `${k} ${k === 1 ? s : s + "s"}`;
+    const sumaUsd = arr => arr.reduce((s, p) => s + montoUsd(p), 0);
+    const pend = db.pagos.filter(p => p.estatus === "Pendiente"), ver = db.pagos.filter(p => p.estatus === "Verificado"), rec = db.pagos.filter(p => p.estatus === "Rechazado");
+    const tv = tasaVigente();
+    $("cards").innerHTML = `
+      <div class="card y"><span>Tasa BCV vigente</span><strong>Bs. ${fmtTasa(tv.valor)}</strong><small>Registrada el ${fmtFecha(tv.fecha)}</small></div>
+      <div class="card"><span>Monto verificado</span><strong>Bs. ${fmtBs(suma(ver))}</strong><small>USD ${fmtBs(sumaUsd(ver))} · ${n(ver.length, "pago")}</small></div>
+      <div class="card"><span>Monto pendiente</span><strong>Bs. ${fmtBs(suma(pend))}</strong><small>USD ${fmtBs(sumaUsd(pend))} · ${n(pend.length, "pago")}</small></div>
+      <div class="card"><span>Rechazados</span><strong>${rec.length}</strong><small>Bs. ${fmtBs(suma(rec))}</small></div>`;
+    const ult = [...db.pagos].sort((a, b) => b.creado_en.localeCompare(a.creado_en)).slice(0, 5);
+    $("ultimos").innerHTML = `<table>${cabPagos(false)}<tbody>${ult.map(p => filaPago(p, false)).join("")}</tbody></table>`;
+
+    const fe = $("fEstatus").value, q = $("fBuscar").value.replace(/\D/g, "");
+    const lista = db.pagos.filter(p => (!fe || p.estatus === fe) && (!q || p.referencia.includes(q) || byId("estudiantes", p.estudiante_id).cedula.includes(q)))
+      .sort((a, b) => b.fecha_pago.localeCompare(a.fecha_pago));
+    $("tablaPagos").innerHTML = lista.length
+      ? `<table>${cabPagos(true)}<tbody>${lista.map(p => filaPago(p, true)).join("")}</tbody></table>`
+      : `<p class="empty">No hay pagos con esos filtros.</p>`;
+
+    const vals = [...db.validaciones].sort((a, b) => b.fecha.localeCompare(a.fecha));
+    $("tablaVal").innerHTML = `<table><thead><tr><th>Fecha</th><th>Referencia</th><th>Nuevo estatus</th><th>Administrador</th><th>Motivo</th></tr></thead><tbody>${
+      vals.map(v => `<tr><td>${v.fecha.replace("T", " ")}</td><td>${byId("pagos", v.pago_id).referencia}</td><td><span class="pill ${v.estatus_nuevo}">${v.estatus_nuevo}</span></td><td>${byId("administradores", v.admin_id).nombre}</td><td>${esc(v.motivo)}</td></tr>`).join("")}</tbody></table>`;
+
+    const tasas = [...db.tasas_bcv].sort((a, b) => b.fecha.localeCompare(a.fecha));
+    $("tablaTasas").innerHTML = `<table><thead><tr><th>Fecha</th><th class="num">Tasa (Bs./USD)</th><th>Registrada por</th><th class="num">Pagos asociados</th></tr></thead><tbody>${
+      tasas.map(t => `<tr><td>${fmtFecha(t.fecha)}${t.id === tv.id ? ' <span class="pill Verificado">Vigente</span>' : ""}</td><td class="num">${fmtTasa(t.valor)}</td><td>${byId("administradores", t.registrada_por).nombre}</td><td class="num">${db.pagos.filter(p => p.tasa_id === t.id).length}</td></tr>`).join("")}</tbody></table>`;
+  }
+  $("fEstatus").addEventListener("change", pintarAdmin);
+  $("fBuscar").addEventListener("input", pintarAdmin);
+
+  function registrarValidacion(pago, estatus, motivo) {
+    pago.estatus = estatus;
+    db.validaciones.push({ id: nextId("validaciones"), pago_id: pago.id, admin_id: sesion.admin_id, estatus_nuevo: estatus, motivo, fecha: ahora() });
+  }
+  let pagoARechazar = null;
+  $("tablaPagos").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (!sesionValida()) return route();
+    renovar(); pintarSesion();
+    if (b.dataset.ver) {
+      const p = byId("pagos", +b.dataset.ver);
+      registrarValidacion(p, "Verificado", "Verificado manualmente contra comprobante");
+      show($("msgPagos"), `Pago ${p.referencia} verificado.`, "ok");
+      $("rechazoBox").hidden = true; pintarAdmin();
+    } else if (b.dataset.rech) {
+      pagoARechazar = byId("pagos", +b.dataset.rech);
+      $("motivoLbl").textContent = `Motivo del rechazo de la referencia ${pagoARechazar.referencia}`;
+      $("rechazoBox").hidden = false; hide($("msgPagos")); $("motivo").value = ""; $("motivo").focus();
+    }
+  });
+  $("cancRechazo").addEventListener("click", () => { $("rechazoBox").hidden = true; pagoARechazar = null; });
+  $("confRechazo").addEventListener("click", () => {
+    if (!sesionValida()) return route();
+    const m = $("motivo").value.trim();
+    if (!m) return show($("msgPagos"), "Escribe el motivo del rechazo.", "bad");
+    registrarValidacion(pagoARechazar, "Rechazado", m);
+    show($("msgPagos"), `Pago ${pagoARechazar.referencia} rechazado.`, "ok");
+    $("rechazoBox").hidden = true; pagoARechazar = null; pintarAdmin();
+  });
+
+  $("tFecha").value = hoy(); $("tFecha").max = hoy();
+  $("tasaForm").addEventListener("submit", e => {
+    e.preventDefault();
+    if (!sesionValida()) return route();
+    renovar(); pintarSesion();
+    const msg = $("msgTasa"), f = $("tFecha").value, v = parseFloat($("tValor").value);
+    if (!f || !(v > 0)) return show(msg, "Indica la fecha y una tasa mayor que cero.", "bad");
+    // UNIQUE (fecha)
+    if (db.tasas_bcv.some(t => t.fecha === f)) return show(msg, `Ya existe una tasa registrada para el ${fmtFecha(f)}.`, "bad");
+    db.tasas_bcv.push({ id: nextId("tasas_bcv"), fecha: f, valor: Math.round(v * 1000) / 1000, registrada_por: sesion.admin_id });
+    $("tValor").value = "";
+    show(msg, `Tasa de Bs. ${fmtTasa(v)} registrada para el ${fmtFecha(f)}.`, "ok");
+    pintarAdmin();
+  });
+
+  route();
+</script>
+</body>
+</html>
