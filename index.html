@@ -490,77 +490,80 @@
 
 
 <script>
-  // ===== "Base de datos" en memoria, con la misma estructura del modelo relacional =====
-  const db = {
-    administradores: [
-      { id: 1, usuario: "admin", nombre: "Julio Navas", rol: "superadmin", activo: true,
-        password_hash: "f4e68314f1136c14b84e49e2fd05046aff1ec229b70126a6203b3e2a1fa4b39c", ultimo_acceso: null },
-      { id: 2, usuario: "cobranzas", nombre: "Emily Toro", rol: "cobranzas", activo: true,
-        password_hash: "f6f1295e1c43ebcf50f89102349507797d5a9391aebe0da09945bfb3c6402721", ultimo_acceso: null }
-    ],
-    sesiones_admin: [],
-    bancos: [
-      { id: 1, codigo: "0102", nombre: "Banco de Venezuela" }, { id: 2, codigo: "0134", nombre: "Banesco" },
-      { id: 3, codigo: "0105", nombre: "Mercantil" }, { id: 4, codigo: "0114", nombre: "Bancaribe" },
-      { id: 5, codigo: "0191", nombre: "BNC" }, { id: 6, codigo: "0108", nombre: "Provincial" },
-      { id: 7, codigo: "0172", nombre: "Bancamiga" }, { id: 8, codigo: "0163", nombre: "Banco del Tesoro" }
-    ],
-    estudiantes: [
-      { id: 1, cedula: "28596966", nombres: "Edward", apellidos: "Camacho" },
-      { id: 2, cedula: "26386603", nombres: "Emily", apellidos: "Toro" },
-      { id: 3, cedula: "23613041", nombres: "Julio", apellidos: "Navas" },
-      { id: 4, cedula: "31510668", nombres: "Valery", apellidos: "Hurtado" }
-    ],
-    tasas_bcv: [
-      { id: 1, fecha: "2026-10-02", valor: 845.100, registrada_por: 1 },
-      { id: 2, fecha: "2026-10-15", valor: 862.400, registrada_por: 1 },
-      { id: 3, fecha: "2026-10-30", valor: 885.950, registrada_por: 2 },
-      { id: 4, fecha: "2026-11-04", valor: 893.217, registrada_por: 1 }
-    ],
-    pagos: [
-      { id: 1, estudiante_id: 1, banco_emisor_id: 2, banco_receptor_id: 1, tasa_id: 1, fecha_pago: "2026-10-02", monto_bs: 16902.00, referencia: "004512", estatus: "Verificado", creado_en: "2026-10-02T10:14" },
-      { id: 2, estudiante_id: 1, banco_emisor_id: 3, banco_receptor_id: 1, tasa_id: 3, fecha_pago: "2026-10-30", monto_bs: 17719.00, referencia: "778201", estatus: "Pendiente", creado_en: "2026-10-30T16:40" },
-      { id: 3, estudiante_id: 2, banco_emisor_id: 1, banco_receptor_id: 1, tasa_id: 2, fecha_pago: "2026-10-15", monto_bs: 8624.00, referencia: "331009", estatus: "Rechazado", creado_en: "2026-10-15T09:02" },
-      { id: 4, estudiante_id: 3, banco_emisor_id: 5, banco_receptor_id: 1, tasa_id: 4, fecha_pago: "2026-11-04", monto_bs: 17864.34, referencia: "120988", estatus: "Pendiente", creado_en: "2026-11-04T08:31" }
-    ],
-    validaciones: [
-      { id: 1, pago_id: 1, admin_id: 2, estatus_nuevo: "Verificado", motivo: "Coincide con estado de cuenta Banesco", fecha: "2026-10-03T11:20" },
-      { id: 2, pago_id: 3, admin_id: 2, estatus_nuevo: "Rechazado", motivo: "Monto no coincide con el estado de cuenta", fecha: "2026-10-16T14:05" }
-    ]
-  };
-  const nextId = t => db[t].reduce((m, r) => Math.max(m, r.id), 0) + 1;
-  const byId = (t, id) => db[t].find(r => r.id === id);
+  // ===== Conexión con la base de datos (Supabase · PostgreSQL) =====
+  // La clave publishable es pública: solo permite ejecutar las funciones del script SQL,
+  // no leer ni modificar las tablas directamente.
+  const SUPABASE_URL = "https://uexwaiogqzvrjmqaiupe.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_w3xzwAToVK2dQnenVHxJsA_KySNkYyO";
+
+  async function rpc(fn, args = {}) {
+    let r;
+    try {
+      r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify(args)
+      });
+    } catch {
+      throw new Error("No hay conexión con el servidor. Revisa tu internet e intenta de nuevo.");
+    }
+    const text = await r.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+    if (!r.ok) throw new Error((data && data.message) || "El servidor no pudo procesar la solicitud.");
+    return data;
+  }
 
   // ===== Utilidades =====
   const $ = id => document.getElementById(id);
-  const fmtBs = n => n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fmtTasa = n => n.toLocaleString("es-VE", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-  const fmtFecha = f => f.slice(0, 10).split("-").reverse().join("/");
+  const num = v => Number(v);
+  const fmtBs = n => num(n).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtTasa = n => num(n).toLocaleString("es-VE", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  const fmtFecha = f => String(f).slice(0, 10).split("-").reverse().join("/");
+  const fmtFechaHora = f => {
+    const d = new Date(f);
+    return isNaN(d) ? String(f) : d.toLocaleString("es-VE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
   const hoy = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
-  const ahora = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function show(el, text, kind) { el.textContent = text; el.className = "msg show " + kind; }
   function hide(el) { el.className = "msg"; el.textContent = ""; }
-
-  // Tasa aplicable a una fecha: la última registrada en o antes de ese día
-  function tasaPara(fecha) {
-    return db.tasas_bcv.filter(t => t.fecha <= fecha).sort((a, b) => b.fecha.localeCompare(a.fecha))[0] || null;
+  async function ocupado(btn, fn) {
+    const txt = btn.textContent; btn.disabled = true; btn.textContent = "Procesando…";
+    try { return await fn(); } finally { btn.disabled = false; btn.textContent = txt; }
   }
-  const tasaVigente = () => tasaPara(hoy()) || [...db.tasas_bcv].sort((a, b) => b.fecha.localeCompare(a.fecha))[0];
-  const montoUsd = p => p.monto_bs / byId("tasas_bcv", p.tasa_id).valor;
 
   // ===== Portal del estudiante =====
-  function pintarTasaPublica() { $("rateView").textContent = "Bs. " + fmtTasa(tasaVigente().valor); }
-  pintarTasaPublica();
-  for (const id of ["emisor", "receptor"]) {
-    $(id).innerHTML = "<option value=''>Selecciona un banco</option>" + db.bancos.map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
+  let tasaActual = null;
+
+  async function pintarTasaPublica() {
+    try {
+      const [t] = await rpc("tasa_vigente");
+      tasaActual = t || null;
+      $("rateView").textContent = t ? "Bs. " + fmtTasa(t.valor) : "Sin tasa registrada";
+      actualizarEquiv();
+    } catch (err) { $("rateView").textContent = "No disponible"; }
   }
+
+  async function cargarBancos() {
+    try {
+      const bancos = await rpc("listar_bancos");
+      for (const id of ["emisor", "receptor"]) {
+        $(id).innerHTML = "<option value=''>Selecciona un banco</option>" +
+          bancos.map(b => `<option value="${b.id}">${esc(b.nombre)}</option>`).join("");
+      }
+    } catch (err) {
+      for (const id of ["emisor", "receptor"]) $(id).innerHTML = "<option value=''>No se pudieron cargar los bancos</option>";
+    }
+  }
+
   $("fecha").max = hoy();
 
   function actualizarEquiv() {
     const v = parseFloat($("monto").value);
-    const t = tasaPara($("fecha").value || hoy());
-    $("equiv").textContent = v > 0 && t ? `Equivale a USD ${fmtBs(v / t.valor)} (tasa ${fmtTasa(t.valor)} del ${fmtFecha(t.fecha)})` : "\u00a0";
+    $("equiv").textContent = v > 0 && tasaActual
+      ? `Equivale aprox. a USD ${fmtBs(v / tasaActual.valor)} (tasa ${fmtTasa(tasaActual.valor)} del ${fmtFecha(tasaActual.fecha)})`
+      : " ";
   }
   $("monto").addEventListener("input", actualizarEquiv);
   $("fecha").addEventListener("change", actualizarEquiv);
@@ -585,7 +588,7 @@
   menuBtn.addEventListener("click", () => { const o = $("nav").classList.toggle("open"); menuBtn.setAttribute("aria-expanded", o); });
   document.querySelectorAll("nav a").forEach(a => a.addEventListener("click", () => { $("nav").classList.remove("open"); menuBtn.setAttribute("aria-expanded", false); }));
 
-  $("p-reportar").addEventListener("submit", e => {
+  $("p-reportar").addEventListener("submit", async e => {
     e.preventDefault();
     const msg = $("msgReport");
     const ci = $("ci").value.replace(/\D/g, ""), ref = $("ref").value.replace(/\D/g, "");
@@ -599,64 +602,81 @@
     if (ref.length < 4) missing.push("referencia (mínimo 4 dígitos)");
     if (!$("comp").files.length) missing.push("comprobante");
     if (missing.length) return show(msg, "Completa estos campos: " + missing.join(", ") + ".", "bad");
-    const tasa = tasaPara(fecha);
-    if (!tasa) return show(msg, "No hay tasa BCV registrada para esa fecha. Contacta a Cobranzas.", "bad");
-    // UNIQUE (banco_emisor_id, referencia)
-    if (db.pagos.some(p => p.referencia === ref && p.banco_emisor_id === emisor)) {
-      return show(msg, `La referencia ${ref} de ${byId("bancos", emisor).nombre} ya fue reportada. Si crees que es un error, contacta a Cobranzas.`, "bad");
-    }
-    let est = db.estudiantes.find(s => s.cedula === ci);
-    if (!est) { est = { id: nextId("estudiantes"), cedula: ci, nombres: "Estudiante", apellidos: "sin registrar" }; db.estudiantes.push(est); }
-    db.pagos.push({ id: nextId("pagos"), estudiante_id: est.id, banco_emisor_id: emisor, banco_receptor_id: receptor, tasa_id: tasa.id,
-      fecha_pago: fecha, monto_bs: monto, referencia: ref, estatus: "Pendiente", creado_en: ahora() });
-    e.target.reset(); $("equiv").textContent = "\u00a0";
-    show(msg, `Pago reportado. La referencia ${ref} quedó en estatus Pendiente hasta su conciliación.`, "ok");
+
+    await ocupado(e.submitter || e.target.querySelector("button[type=submit]"), async () => {
+      try {
+        const [r] = await rpc("reportar_pago", {
+          p_cedula: ci, p_banco_emisor_id: emisor, p_banco_receptor_id: receptor,
+          p_fecha_pago: fecha, p_monto_bs: monto, p_referencia: ref,
+          p_comprobante_url: $("comp").files[0].name
+        });
+        e.target.reset(); $("equiv").textContent = " ";
+        show(msg, `Pago reportado. La referencia ${ref} (USD ${fmtBs(r.monto_usd)} a tasa ${fmtTasa(r.tasa)}) quedó en estatus Pendiente hasta su conciliación.`, "ok");
+      } catch (err) { show(msg, err.message, "bad"); }
+    });
   });
 
-  $("p-consultar").addEventListener("submit", e => {
+  $("p-consultar").addEventListener("submit", async e => {
     e.preventDefault();
     const ci = $("ciQ").value.replace(/\D/g, ""), out = $("results");
     if (!ci) { out.innerHTML = `<p class="empty">Escribe tu cédula para ver tus pagos.</p>`; return; }
-    const est = db.estudiantes.find(s => s.cedula === ci);
-    const mine = est ? db.pagos.filter(p => p.estudiante_id === est.id).sort((a, b) => b.fecha_pago.localeCompare(a.fecha_pago)) : [];
-    if (!mine.length) { out.innerHTML = `<p class="empty">No hay pagos reportados con la cédula ${ci}. Usa la pestaña Reportar pago para registrar uno.</p>`; return; }
-    out.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Fecha</th><th>Banco</th><th>Referencia</th><th class="num">Monto (Bs.)</th><th>Estatus</th></tr></thead>
-      <tbody>${mine.map(p => `<tr><td>${fmtFecha(p.fecha_pago)}</td><td>${byId("bancos", p.banco_emisor_id).nombre}</td><td>${p.referencia}</td><td class="num">${fmtBs(p.monto_bs)}</td><td><span class="pill ${p.estatus}">${p.estatus}</span></td></tr>`).join("")}</tbody>
-    </table></div>`;
+    await ocupado(e.submitter || e.target.querySelector("button[type=submit]"), async () => {
+      try {
+        const mine = await rpc("consultar_pagos", { p_cedula: ci });
+        if (!mine.length) { out.innerHTML = `<p class="empty">No hay pagos reportados con la cédula ${esc(ci)}. Usa la pestaña Reportar pago para registrar uno.</p>`; return; }
+        out.innerHTML = `<div class="table-wrap"><table>
+          <thead><tr><th>Fecha</th><th>Banco</th><th>Referencia</th><th class="num">Monto (Bs.)</th><th>Estatus</th></tr></thead>
+          <tbody>${mine.map(p => `<tr><td>${fmtFecha(p.fecha_pago)}</td><td>${esc(p.banco_emisor)}</td><td>${esc(p.referencia)}</td><td class="num">${fmtBs(p.monto_bs)}</td><td><span class="pill ${p.estatus}">${p.estatus}</span>${p.estatus === "Rechazado" && p.motivo ? `<br><span class="muted">${esc(p.motivo)}</span>` : ""}</td></tr>`).join("")}</tbody>
+        </table></div>`;
+      } catch (err) { out.innerHTML = `<p class="empty">${esc(err.message)}</p>`; }
+    });
   });
 
   // ===== Sesión de administrador =====
+  // El usuario y la contraseña se validan en la base de datos; aquí solo se guarda el token de la sesión.
   const SESION_MIN = 30;
   let sesion = null;
-  async function sha256(t) {
-    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
-    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
-  }
+  try { sesion = JSON.parse(sessionStorage.getItem("sesionAdmin")) || null; } catch { sesion = null; }
+  function guardarSesion() { try { sesion ? sessionStorage.setItem("sesionAdmin", JSON.stringify(sesion)) : sessionStorage.removeItem("sesionAdmin"); } catch {} }
   function sesionValida() {
     if (sesion && new Date() < new Date(sesion.expira_en)) return true;
-    if (sesion) { sesion.cerrada_en = ahora(); sesion = null; }
+    if (sesion) { sesion = null; guardarSesion(); }
     return false;
   }
-  function renovar() { if (sesion) sesion.expira_en = new Date(Date.now() + SESION_MIN * 60000).toISOString(); }
+  function renovar() { if (sesion) { sesion.expira_en = new Date(Date.now() + SESION_MIN * 60000).toISOString(); guardarSesion(); } }
+
+  // Llamadas del módulo administrativo: si la sesión expiró en el servidor, vuelve al login
+  async function rpcAdmin(fn, args = {}) {
+    try {
+      const data = await rpc(fn, { p_token: sesion && sesion.token, ...args });
+      renovar();
+      return data;
+    } catch (err) {
+      if (/sesi[oó]n expir/i.test(err.message)) {
+        sesion = null; guardarSesion(); route();
+        show($("msgLogin"), err.message, "bad");
+      }
+      throw err;
+    }
+  }
 
   $("loginForm").addEventListener("submit", async e => {
     e.preventDefault();
     const msg = $("msgLogin"), u = $("usr").value.trim().toLowerCase(), pw = $("pwd").value;
     if (!u || !pw) return show(msg, "Escribe tu usuario y tu contraseña.", "bad");
-    const adm = db.administradores.find(a => a.usuario === u && a.activo);
-    const h = await sha256(pw);
-    if (!adm || adm.password_hash !== h) { $("pwd").value = ""; return show(msg, "Usuario o contraseña incorrectos.", "bad"); }
-    hide(msg); e.target.reset();
-    adm.ultimo_acceso = ahora();
-    sesion = { id: nextId("sesiones_admin"), admin_id: adm.id, token_hash: await sha256(crypto.randomUUID()),
-      user_agent: navigator.userAgent, creada_en: ahora(), expira_en: "", cerrada_en: null };
-    renovar(); db.sesiones_admin.push(sesion);
-    route();
+    await ocupado(e.submitter || e.target.querySelector("button[type=submit]"), async () => {
+      try {
+        const [r] = await rpc("admin_login", { p_usuario: u, p_password: pw, p_user_agent: navigator.userAgent });
+        sesion = { token: r.token, nombre: r.nombre, rol: r.rol, creada_en: new Date().toISOString(), expira_en: r.expira_en };
+        guardarSesion(); hide(msg); e.target.reset();
+        route();
+      } catch (err) { $("pwd").value = ""; show(msg, err.message, "bad"); }
+    });
   });
-  $("logoutBtn").addEventListener("click", () => {
-    if (sesion) sesion.cerrada_en = ahora();
-    sesion = null; location.hash = "inicio"; route();
+  $("logoutBtn").addEventListener("click", async () => {
+    const tk = sesion && sesion.token;
+    sesion = null; guardarSesion(); location.hash = "inicio"; route();
+    if (tk) { try { await rpc("admin_logout", { p_token: tk }); } catch {} }
   });
 
   // ===== Rutas: #admin muestra login o módulo; cualquier otra, el portal público =====
@@ -677,112 +697,143 @@
   window.addEventListener("hashchange", route);
 
   function pintarSesion() {
-    const a = byId("administradores", sesion.admin_id);
+    if (!sesion) return;
     const exp = new Date(sesion.expira_en).toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit" });
-    $("whoName").textContent = a.nombre;
-    $("whoExp").textContent = `${a.rol} · expira ${exp}`;
-    $("sesionInfo").textContent = `Sesión #${sesion.id} de ${a.nombre} (${a.rol}), iniciada ${sesion.creada_en.replace("T", " ")}. Se cierra tras ${SESION_MIN} minutos sin actividad.`;
+    $("whoName").textContent = sesion.nombre;
+    $("whoExp").textContent = `${sesion.rol} · expira ${exp}`;
+    $("sesionInfo").textContent = `Sesión de ${sesion.nombre} (${sesion.rol}) · iniciada ${fmtFechaHora(sesion.creada_en)} · Los datos se actualizan solos cada 15 segundos. Si cierras la página, la sesión expira a los ${SESION_MIN} minutos.`;
   }
 
   // ===== Módulo administrativo =====
   const atabs = [...document.querySelectorAll(".atabs button")];
   atabs.forEach(b => b.addEventListener("click", () => {
     if (!sesionValida()) return route();
-    renovar(); pintarSesion();
     atabs.forEach(x => x.setAttribute("aria-selected", x === b));
     document.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== b.dataset.at);
     pintarAdmin();
   }));
 
   function filaPago(p, acciones) {
-    const e = byId("estudiantes", p.estudiante_id), t = byId("tasas_bcv", p.tasa_id);
     const btns = acciones && p.estatus === "Pendiente"
-      ? `<div class="act"><button class="mini ok" data-ver="${p.id}">Verificar</button><button class="mini bad" data-rech="${p.id}">Rechazar</button></div>`
-      : (acciones ? `<span class="muted">—</span>` : "");
-    return `<tr><td>${fmtFecha(p.fecha_pago)}</td><td>${esc(e.nombres + " " + e.apellidos)}<br><span class="muted">${e.cedula}</span></td>
-      <td>${byId("bancos", p.banco_emisor_id).nombre}<br><span class="muted">→ ${byId("bancos", p.banco_receptor_id).nombre}</span></td>
-      <td>${p.referencia}</td><td class="num">${fmtBs(p.monto_bs)}</td><td class="num">${fmtTasa(t.valor)}</td>
-      <td class="num">${fmtBs(montoUsd(p))}</td><td><span class="pill ${p.estatus}">${p.estatus}</span></td>${acciones ? `<td>${btns}</td>` : ""}</tr>`;
+      ? `<div class="act"><button class="mini ok" data-ver="${p.id}" data-ref="${esc(p.referencia)}">Verificar</button><button class="mini bad" data-rech="${p.id}" data-ref="${esc(p.referencia)}">Rechazar</button></div>`
+      : (acciones ? `<span class="muted">${p.conciliado ? "Conciliado" : "—"}</span>` : "");
+    return `<tr><td>${fmtFecha(p.fecha_pago)}</td><td>${esc(p.estudiante || "Sin nombre registrado")}<br><span class="muted">${esc(p.cedula)}</span></td>
+      <td>${esc(p.banco_emisor)}<br><span class="muted">→ ${esc(p.banco_receptor)}</span></td>
+      <td>${esc(p.referencia)}</td><td class="num">${fmtBs(p.monto_bs)}</td><td class="num">${fmtTasa(p.tasa)}</td>
+      <td class="num">${fmtBs(p.monto_usd)}</td><td><span class="pill ${p.estatus}">${p.estatus}</span></td>${acciones ? `<td>${btns}</td>` : ""}</tr>`;
   }
   const cabPagos = acc => `<thead><tr><th>Fecha</th><th>Estudiante</th><th>Banco</th><th>Referencia</th><th class="num">Monto (Bs.)</th><th class="num">Tasa</th><th class="num">USD</th><th>Estatus</th>${acc ? "<th>Acción</th>" : ""}</tr></thead>`;
 
-  function pintarAdmin() {
-    const suma = arr => arr.reduce((s, p) => s + p.monto_bs, 0);
-    const n = (k, s) => `${k} ${k === 1 ? s : s + "s"}`;
-    const sumaUsd = arr => arr.reduce((s, p) => s + montoUsd(p), 0);
-    const pend = db.pagos.filter(p => p.estatus === "Pendiente"), ver = db.pagos.filter(p => p.estatus === "Verificado"), rec = db.pagos.filter(p => p.estatus === "Rechazado");
-    const tv = tasaVigente();
-    $("cards").innerHTML = `
-      <div class="card y"><span>Tasa BCV vigente</span><strong>Bs. ${fmtTasa(tv.valor)}</strong><small>Registrada el ${fmtFecha(tv.fecha)}</small></div>
-      <div class="card"><span>Monto verificado</span><strong>Bs. ${fmtBs(suma(ver))}</strong><small>USD ${fmtBs(sumaUsd(ver))} · ${n(ver.length, "pago")}</small></div>
-      <div class="card"><span>Monto pendiente</span><strong>Bs. ${fmtBs(suma(pend))}</strong><small>USD ${fmtBs(sumaUsd(pend))} · ${n(pend.length, "pago")}</small></div>
-      <div class="card"><span>Rechazados</span><strong>${rec.length}</strong><small>Bs. ${fmtBs(suma(rec))}</small></div>`;
-    const ult = [...db.pagos].sort((a, b) => b.creado_en.localeCompare(a.creado_en)).slice(0, 5);
-    $("ultimos").innerHTML = `<table>${cabPagos(false)}<tbody>${ult.map(p => filaPago(p, false)).join("")}</tbody></table>`;
-
-    const fe = $("fEstatus").value, q = $("fBuscar").value.replace(/\D/g, "");
-    const lista = db.pagos.filter(p => (!fe || p.estatus === fe) && (!q || p.referencia.includes(q) || byId("estudiantes", p.estudiante_id).cedula.includes(q)))
-      .sort((a, b) => b.fecha_pago.localeCompare(a.fecha_pago));
+  async function pintarTablaPagos() {
+    const fe = $("fEstatus").value || null, q = $("fBuscar").value.trim() || null;
+    const lista = await rpcAdmin("admin_listar_pagos", { p_estatus: fe, p_buscar: q });
     $("tablaPagos").innerHTML = lista.length
       ? `<table>${cabPagos(true)}<tbody>${lista.map(p => filaPago(p, true)).join("")}</tbody></table>`
       : `<p class="empty">No hay pagos con esos filtros.</p>`;
-
-    const vals = [...db.validaciones].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    $("tablaVal").innerHTML = `<table><thead><tr><th>Fecha</th><th>Referencia</th><th>Nuevo estatus</th><th>Administrador</th><th>Motivo</th></tr></thead><tbody>${
-      vals.map(v => `<tr><td>${v.fecha.replace("T", " ")}</td><td>${byId("pagos", v.pago_id).referencia}</td><td><span class="pill ${v.estatus_nuevo}">${v.estatus_nuevo}</span></td><td>${byId("administradores", v.admin_id).nombre}</td><td>${esc(v.motivo)}</td></tr>`).join("")}</tbody></table>`;
-
-    const tasas = [...db.tasas_bcv].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    $("tablaTasas").innerHTML = `<table><thead><tr><th>Fecha</th><th class="num">Tasa (Bs./USD)</th><th>Registrada por</th><th class="num">Pagos asociados</th></tr></thead><tbody>${
-      tasas.map(t => `<tr><td>${fmtFecha(t.fecha)}${t.id === tv.id ? ' <span class="pill Verificado">Vigente</span>' : ""}</td><td class="num">${fmtTasa(t.valor)}</td><td>${byId("administradores", t.registrada_por).nombre}</td><td class="num">${db.pagos.filter(p => p.tasa_id === t.id).length}</td></tr>`).join("")}</tbody></table>`;
   }
-  $("fEstatus").addEventListener("change", pintarAdmin);
-  $("fBuscar").addEventListener("input", pintarAdmin);
 
-  function registrarValidacion(pago, estatus, motivo) {
-    pago.estatus = estatus;
-    db.validaciones.push({ id: nextId("validaciones"), pago_id: pago.id, admin_id: sesion.admin_id, estatus_nuevo: estatus, motivo, fecha: ahora() });
+  let pintando = false;
+  async function pintarAdmin() {
+    if (!sesionValida() || pintando) return;
+    pintando = true;
+    try {
+      const n = (k, s) => `${k} ${k === 1 ? s : s + "s"}`;
+      const [[r], todos, vals, tasas] = await Promise.all([
+        rpcAdmin("admin_resumen"),
+        rpcAdmin("admin_listar_pagos"),
+        rpcAdmin("admin_historial_validaciones", { p_limite: 50 }),
+        rpcAdmin("admin_listar_tasas")
+      ]);
+      pintarSesion();
+      const rechBs = todos.filter(p => p.estatus === "Rechazado").reduce((s, p) => s + num(p.monto_bs), 0);
+      $("cards").innerHTML = `
+        <div class="card y"><span>Tasa BCV vigente</span><strong>${r.tasa_valor ? "Bs. " + fmtTasa(r.tasa_valor) : "—"}</strong><small>${r.tasa_fecha ? "Registrada el " + fmtFecha(r.tasa_fecha) : "Sin tasa registrada"}</small></div>
+        <div class="card"><span>Monto verificado</span><strong>Bs. ${fmtBs(r.verificado_bs)}</strong><small>USD ${fmtBs(r.verificado_usd)} · ${n(r.verificados, "pago")}</small></div>
+        <div class="card"><span>Monto pendiente</span><strong>Bs. ${fmtBs(r.pendiente_bs)}</strong><small>USD ${fmtBs(r.pendiente_usd)} · ${n(r.pendientes, "pago")}</small></div>
+        <div class="card"><span>Rechazados</span><strong>${r.rechazados}</strong><small>Bs. ${fmtBs(rechBs)}</small></div>`;
+      $("ultimos").innerHTML = todos.length
+        ? `<table>${cabPagos(false)}<tbody>${todos.slice(0, 5).map(p => filaPago(p, false)).join("")}</tbody></table>`
+        : `<p class="empty">Todavía no hay pagos reportados.</p>`;
+
+      await pintarTablaPagos();
+
+      $("tablaVal").innerHTML = vals.length
+        ? `<table><thead><tr><th>Fecha</th><th>Referencia</th><th>Nuevo estatus</th><th>Administrador</th><th>Motivo</th></tr></thead><tbody>${
+          vals.map(v => `<tr><td>${fmtFechaHora(v.fecha)}</td><td>${esc(v.referencia)}</td><td><span class="pill ${v.estatus_nuevo}">${v.estatus_nuevo}</span></td><td>${esc(v.administrador)}</td><td>${esc(v.motivo)}</td></tr>`).join("")}</tbody></table>`
+        : `<p class="empty">Todavía no hay validaciones.</p>`;
+
+      const vigente = tasas.find(t => t.fecha <= hoy());
+      $("tablaTasas").innerHTML = `<table><thead><tr><th>Fecha</th><th class="num">Tasa (Bs./USD)</th><th>Registrada por</th><th class="num">Pagos asociados</th></tr></thead><tbody>${
+        tasas.map(t => `<tr><td>${fmtFecha(t.fecha)}${vigente && t.fecha === vigente.fecha ? ' <span class="pill Verificado">Vigente</span>' : ""}</td><td class="num">${fmtTasa(t.valor)}</td><td>${esc(t.registrada_por)}</td><td class="num">${t.pagos_que_la_usan}</td></tr>`).join("")}</tbody></table>`;
+    } catch (err) {
+      if (sesion) show($("msgPagos"), err.message, "bad");
+    } finally { pintando = false; }
   }
+
+  // Actualización automática mientras el módulo está abierto
+  setInterval(() => {
+    if (location.hash === "#admin" && sesionValida() && document.visibilityState === "visible") pintarAdmin();
+  }, 15000);
+
+  $("fEstatus").addEventListener("change", () => pintarTablaPagos().catch(err => show($("msgPagos"), err.message, "bad")));
+  let buscarTimer;
+  $("fBuscar").addEventListener("input", () => {
+    clearTimeout(buscarTimer);
+    buscarTimer = setTimeout(() => pintarTablaPagos().catch(err => show($("msgPagos"), err.message, "bad")), 300);
+  });
+
   let pagoARechazar = null;
-  $("tablaPagos").addEventListener("click", e => {
+  $("tablaPagos").addEventListener("click", async e => {
     const b = e.target.closest("button"); if (!b) return;
     if (!sesionValida()) return route();
-    renovar(); pintarSesion();
     if (b.dataset.ver) {
-      const p = byId("pagos", +b.dataset.ver);
-      registrarValidacion(p, "Verificado", "Verificado manualmente contra comprobante");
-      show($("msgPagos"), `Pago ${p.referencia} verificado.`, "ok");
-      $("rechazoBox").hidden = true; pintarAdmin();
+      await ocupado(b, async () => {
+        try {
+          await rpcAdmin("admin_cambiar_estatus", { p_pago_id: +b.dataset.ver, p_estatus: "Verificado", p_motivo: "Verificado manualmente contra comprobante" });
+          show($("msgPagos"), `Pago ${b.dataset.ref} verificado.`, "ok");
+          $("rechazoBox").hidden = true;
+        } catch (err) { show($("msgPagos"), err.message, "bad"); }
+      });
+      pintarAdmin();
     } else if (b.dataset.rech) {
-      pagoARechazar = byId("pagos", +b.dataset.rech);
+      pagoARechazar = { id: +b.dataset.rech, referencia: b.dataset.ref };
       $("motivoLbl").textContent = `Motivo del rechazo de la referencia ${pagoARechazar.referencia}`;
       $("rechazoBox").hidden = false; hide($("msgPagos")); $("motivo").value = ""; $("motivo").focus();
     }
   });
   $("cancRechazo").addEventListener("click", () => { $("rechazoBox").hidden = true; pagoARechazar = null; });
-  $("confRechazo").addEventListener("click", () => {
+  $("confRechazo").addEventListener("click", async () => {
     if (!sesionValida()) return route();
     const m = $("motivo").value.trim();
     if (!m) return show($("msgPagos"), "Escribe el motivo del rechazo.", "bad");
-    registrarValidacion(pagoARechazar, "Rechazado", m);
-    show($("msgPagos"), `Pago ${pagoARechazar.referencia} rechazado.`, "ok");
-    $("rechazoBox").hidden = true; pagoARechazar = null; pintarAdmin();
-  });
-
-  $("tFecha").value = hoy(); $("tFecha").max = hoy();
-  $("tasaForm").addEventListener("submit", e => {
-    e.preventDefault();
-    if (!sesionValida()) return route();
-    renovar(); pintarSesion();
-    const msg = $("msgTasa"), f = $("tFecha").value, v = parseFloat($("tValor").value);
-    if (!f || !(v > 0)) return show(msg, "Indica la fecha y una tasa mayor que cero.", "bad");
-    // UNIQUE (fecha)
-    if (db.tasas_bcv.some(t => t.fecha === f)) return show(msg, `Ya existe una tasa registrada para el ${fmtFecha(f)}.`, "bad");
-    db.tasas_bcv.push({ id: nextId("tasas_bcv"), fecha: f, valor: Math.round(v * 1000) / 1000, registrada_por: sesion.admin_id });
-    $("tValor").value = "";
-    show(msg, `Tasa de Bs. ${fmtTasa(v)} registrada para el ${fmtFecha(f)}.`, "ok");
+    if (!pagoARechazar) return;
+    await ocupado($("confRechazo"), async () => {
+      try {
+        await rpcAdmin("admin_cambiar_estatus", { p_pago_id: pagoARechazar.id, p_estatus: "Rechazado", p_motivo: m });
+        show($("msgPagos"), `Pago ${pagoARechazar.referencia} rechazado.`, "ok");
+        $("rechazoBox").hidden = true; pagoARechazar = null;
+      } catch (err) { show($("msgPagos"), err.message, "bad"); }
+    });
     pintarAdmin();
   });
 
+  $("tFecha").value = hoy(); $("tFecha").max = hoy();
+  $("tasaForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!sesionValida()) return route();
+    const msg = $("msgTasa"), f = $("tFecha").value, v = parseFloat($("tValor").value);
+    if (!f || !(v > 0)) return show(msg, "Indica la fecha y una tasa mayor que cero.", "bad");
+    await ocupado(e.submitter || e.target.querySelector("button[type=submit]"), async () => {
+      try {
+        await rpcAdmin("admin_registrar_tasa", { p_fecha: f, p_valor: Math.round(v * 1000) / 1000 });
+        $("tValor").value = "";
+        show(msg, `Tasa de Bs. ${fmtTasa(v)} registrada para el ${fmtFecha(f)}.`, "ok");
+      } catch (err) { show(msg, err.message, "bad"); }
+    });
+    pintarAdmin();
+  });
+
+  cargarBancos();
   route();
 </script>
 </body>
